@@ -1,0 +1,56 @@
+# Data paths
+data:
+  data_dir: ./data
+  train_path: ./data/voxceleb1_dev/wav
+  val_path: ./data/voxceleb1_dev/wav
+  test_path: ./data/voxceleb1_test/wav
+  musan_path: ./data/musan_split
+  rir_path: ./data/RIRS_NOISES/simulated_rirs
+
+# Paths to models and checkpoints
+models:
+  checkpoint_dir: ./checkpoints
+  best_model_dir: ./best_models
+  pretrained_model: ./data/models/lab3_model_0039.pth
+  resume_checkpoint: "./checkpoints/seed_model_0041.pth"  # Path to the checkpoint for continuing learning
+
+# Training parameters
+training:
+  batch_size_train: 128
+  batch_size_val: 128
+  batch_size_test: 128
+  num_epochs: 60
+  learning_rate: 0.0005
+  num_workers: 0
+  shuffle: true
+  
+  # Learning rate planner parameters
+  scheduler:
+    step_size: 20  # Every 20 epochs
+    gamma: 0.5     # Reducing LR by 2 times
+
+# Neural network architecture
+architecture:
+  n_mels: 40                       # Number of mel filters
+  log_input: true                  # Logarithm of features
+  layers: [3, 4, 6, 3]             # Number of ResNet blocks at each level
+  num_filters: [32, 64, 128, 256]  # Number of filters at each level
+  embedding_dim: 512               # Embedding dimension
+
+# Loss function parameters
+loss:
+  margin: 0.35   # Margin for AAMSoftmax
+  scale: 32.0    # Scale for AAMSoftmax
+
+# Diffusion parameters
+diffusion:
+  num_blocks: 3         # Number of blocks in the SEED model
+  steps: 1000           # Number of diffusion steps
+  beta_start: 0.0001    # Initial value of beta
+  beta_end: 0.02        # The final value of beta
+
+# Data processing parameters
+data_params:
+  max_frames_train: 200   # Maximum number of frames for training
+  max_frames_val: 1000    # Maximum number of frames for validation
+  max_frames_test: 1000   # Maximum number of frames for the test
