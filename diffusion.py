@@ -1,5 +1,6 @@
 import os
 import math
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
@@ -122,46 +123,49 @@ def train_seed_epoch(seed_model, diffusion, dataloader, optimizer, scheduler, de
     seed_model.train()
     total_loss = 0
     num_batches = 0
-    
-    for batch_idx, batch in enumerate(dataloader):
-        x_clean = batch["clean"].to(device)
-        y_noisy = batch["noisy"].to(device)
 
-        batch_size = x_clean.size(0)
+    progress_bar = tqdm(dataloader, desc="Training SEED", leave=True, dynamic_ncols=True)
 
-        t = torch.randint(0, diffusion.T, (batch_size,), device=device)
-        
+    for batch_idx, batch in enumerate(progress_bar):
+        x_clean = batch["clean"].to(device).squeeze(0)  # (D,)
+        y_noisy = batch["noisy"].to(device).squeeze(0)  # (K, D)
+        num_augmentations = y_noisy.size(0)
+
+        t = torch.randint(0, diffusion.T, (1,), device=device)  # (1,)
+
+        # clean forward
         noise_clean = torch.randn_like(x_clean)
         x_t, _ = diffusion.forward_diffusion(x_clean, t, noise=noise_clean)
-        x_pred = seed_model(x_t, t)
-
+        x_pred = seed_model(x_t, t).squeeze(0)
         loss_clean = F.mse_loss(x_pred, x_clean)
-        
-        loss_noisy = 0
-        num_augmentations = y_noisy.size(1)
 
+        # noisy forward
+        loss_noisy = 0
         for k in range(num_augmentations):
-            y_k = y_noisy[:, k, :]
+            y_k = y_noisy[k]
             noise_k = torch.randn_like(y_k)
             y_t, _ = diffusion.forward_diffusion(y_k, t, noise=noise_k)
-            y_pred = seed_model(y_t, t)
+            y_pred = seed_model(y_t, t).squeeze(0)
             loss_noisy += F.mse_loss(y_pred, x_clean)
-        
+
+        loss_noisy /= num_augmentations
         loss = loss_clean + loss_noisy
-        
+
         optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(seed_model.parameters(), max_norm=1.0)
         optimizer.step()
-        
+
         total_loss += loss.item()
         num_batches += 1
-        
-        print(f"Batch {batch_idx}/{len(dataloader)}, Loss: {loss.item():.6f}")
-    
-    scheduler.step()
 
+        avg_loss = total_loss / num_batches
+        progress_bar.set_postfix({"batch_loss": f"{loss.item():.6f}", "avg_loss": f"{avg_loss:.6f}"})
+
+    scheduler.step()
     avg_loss = total_loss / num_batches
+    progress_bar.close()
+
     return avg_loss
 
 def saveParameters(model, optimizer, scheduler, num_epoch, best_loss, path):

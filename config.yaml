@@ -9,16 +9,16 @@ data:
 
 # Paths to models and checkpoints
 models:
-  checkpoint_dir: ./checkpoints
-  best_model_dir: ./best_models
+  checkpoint_dir: ./checkpoints_2
+  best_model_dir: ./best_models_2
   pretrained_model: ./data/models/lab3_model_0039.pth
-  resume_checkpoint: "./checkpoints/seed_model_0041.pth"  # Path to the checkpoint for continuing learning
+  resume_checkpoint: ./checkpoints_2/seed_model_0013.pth  # Path to the checkpoint for continuing learning
 
 # Training parameters
 training:
-  batch_size_train: 128
-  batch_size_val: 128
-  batch_size_test: 128
+  batch_size_train: 1
+  batch_size_val: 1
+  batch_size_test: 1
   num_epochs: 60
   learning_rate: 0.0005
   num_workers: 0
