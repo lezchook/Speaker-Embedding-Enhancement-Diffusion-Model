@@ -130,19 +130,24 @@ def prepare_data_lists(data_dir):
 
 
 def build_models(config, num_speakers):
-    # Speaker model
-    basic_model = ResNet(BasicBlock, layers=config.layers, activation=nn.ReLU,
-                        num_filters=config.num_filters, nOut=config.embedding_dim,
-                        n_mels=config.n_mels, log_input=config.log_input)
-    
-    loss_fn = AAMSoftmaxLoss(nOut=config.embedding_dim, nClasses=num_speakers,
-                            margin=config.margin, scale=config.scale)
-    
-    speaker_model = MainModel(basic_model, loss_fn).to(config.device)
-    
     if config.pretrained_model and os.path.exists(config.pretrained_model):
+        # Speaker model
+        basic_model = ResNet(BasicBlock, layers=config.layers, activation=nn.ReLU,
+                            num_filters=config.num_filters, nOut=config.embedding_dim,
+                            n_mels=config.n_mels, log_input=config.log_input)
+        
+        loss_fn = AAMSoftmaxLoss(nOut=config.embedding_dim, nClasses=num_speakers,
+                                margin=config.margin, scale=config.scale)
+        
+        speaker_model = MainModel(basic_model, loss_fn).to(config.device)
+
         checkpoint = torch.load(config.pretrained_model, map_location=config.device)
         speaker_model.load_state_dict(checkpoint['model'])
+
+        print(f"Loaded pretrained ResNet model from {config.pretrained_model}")
+    else:
+        print(f"ERROR! No pre-trained ResNet model found.")
+        return
     
     # SEED model
     seed_model = SEED(embedding_dim=config.embedding_dim, num_blocks=config.num_blocks,
@@ -183,6 +188,8 @@ def setup_optimizer(config, seed_model):
     
     if config.resume_checkpoint and os.path.exists(config.resume_checkpoint):
         start_epoch, best_loss = loadParameters(seed_model, optimizer, scheduler, config.resume_checkpoint)
+        print(f"Loaded pretrained SEED model from {config.resume_checkpoint}")
+
         start_epoch += 1
     
     return optimizer, scheduler, start_epoch, best_loss

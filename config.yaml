@@ -11,8 +11,8 @@ data:
 models:
   checkpoint_dir: /workspace/checkpoints
   best_model_dir: /workspace/best_models
-  pretrained_model: /workspace/data/models/lab3_model_0039.pth
-  resume_checkpoint: /workspace/checkpoints/seed_model_0014.pth  # Path to the checkpoint for continuing learning
+  pretrained_model: /workspace/data/models/ResNetModel.pth
+  resume_checkpoint: None          # Path to the checkpoint for continuing learning
 
 # Training parameters
 training:
